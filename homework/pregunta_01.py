@@ -4,7 +4,10 @@
 """
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
-
+import os
+import zipfile
+import glob
+import pandas as pd
 
 def pregunta_01():
     """
@@ -71,3 +74,34 @@ def pregunta_01():
 
 
     """
+    # Función para descomprimir un archivo ZIP
+    def decompress_zip(zip_path, extract_to):
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+
+    # Función para crear un directorio si no existe
+    def make_output_dir(output_path):
+        os.makedirs(output_path, exist_ok=True)
+
+    # Función para generar un dataset a partir de archivos organizados en carpetas
+    def create_dataset(input_folder, output_file):
+        dataset = [
+            (open(file, 'r', encoding='utf-8').read().strip(), sentiment)
+            for sentiment in ['negative', 'neutral', 'positive']
+            for file in glob.glob(os.path.join(input_folder, sentiment, '*'))
+        ]
+        df = pd.DataFrame(dataset, columns=['phrase', 'target'])
+        df.to_csv(output_file, index=False)
+        return df
+
+    # Configuración de rutas
+    input_zip, extract_to = 'files/input.zip', 'files'
+    output_dir = 'files/output'
+
+    decompress_zip(input_zip, extract_to)
+    make_output_dir(output_dir)
+
+    train_df = create_dataset(os.path.join(extract_to, 'input/train'), os.path.join(output_dir, 'train_dataset.csv'))
+    test_df = create_dataset(os.path.join(extract_to, 'input/test'), os.path.join(output_dir, 'test_dataset.csv'))
+
+    train_df, test_df
